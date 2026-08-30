@@ -13,17 +13,29 @@
 | **Печат ДДС / фактури** | български `dd.mm.yyyy` |
 | **Plan** | [PLAN.md](PLAN.md) · [gaps.md](gaps.md) |
 
+This repository is the package. The compiler and `std` stay in the baga
+language monorepo. Check this tree out as `app-product/chronobaga` there
+(git submodule) so path deps and `-I app-product` keep working.
+
 ## Checkout
 
+Inside a baga language clone:
+
 ```bash
-# в клона на езика
+git submodule update --init app-product/chronobaga
+# or, first time from a fresh baga tree without the submodule recorded:
+git clone git@github.com:bagalang/chronobaga.git app-product/chronobaga
+```
+
+`sandak.toml` keeps `std = { path = "../../std" }`.
+`tests/chrono_test.baga` stays in baga.
+
+```bash
 cd app-product/chronobaga && BAGA=../../baga ../../sandak build
 cd ../..
 ./baga -I . -I app-product tests/chrono_test.baga
 ./baga -I . -I app-product app-product/chronobaga/tests/smoke.baga
 ```
-
-(Докато пакетът няма отделно git repo, живее в монорепото.)
 
 ## Формати (заключено)
 
