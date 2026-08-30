@@ -1,0 +1,49 @@
+// format.baga — ISO and financial (compact) date strings.
+// JSON / DB / UBL / SAF-T use ISO. Bank and NAP files use financial.
+
+import "types.baga"
+import "parse.baga"
+import "std/str/str.baga"
+
+fn dt_pad2(n: i64) -> str {
+    if n < 0 {
+        return int_to_str(n)
+    }
+    if n < 10 {
+        return concat("0", int_to_str(n))
+    }
+    return int_to_str(n)
+}
+
+fn dt_pad4(n: i64) -> str {
+    if n < 0 {
+        return int_to_str(n)
+    }
+    let s = int_to_str(n)
+    if n < 10 {
+        return concat("000", s)
+    }
+    if n < 100 {
+        return concat("00", s)
+    }
+    if n < 1000 {
+        return concat("0", s)
+    }
+    return s
+}
+
+fn dt_to_iso(d: Date) -> str {
+    return concat(concat(dt_pad4(d.year), "-"), concat(dt_pad2(d.month), concat("-", dt_pad2(d.day))))
+}
+
+fn dt_to_financial(d: Date) -> str {
+    return concat(dt_pad4(d.year), concat(dt_pad2(d.month), dt_pad2(d.day)))
+}
+
+fn dt_canonical_iso(s: str) -> str {
+    let r = dt_parse(s)
+    if r.ok == 0 {
+        return ""
+    }
+    return dt_to_iso(r.value)
+}

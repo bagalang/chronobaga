@@ -1,0 +1,17 @@
+// chrono.baga — chronobaga package entry (sandak).
+//
+// Civil dates modelled on chrono NaiveDate. Storage/JSON: ISO or financial.
+// Bulgarian dd.mm.yyyy is display (invoices, VAT registers), not the wire form.
+//
+//   import "chronobaga/src/chrono.baga"
+
+import "types.baga"
+import "cal.baga"
+import "parse.baga"
+import "format.baga"
+import "ops.baga"
+import "bg.baga"
+import "period.baga"
+import "clock.baga"
+import "json.baga"
+import "now.baga"

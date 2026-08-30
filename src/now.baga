@@ -1,0 +1,22 @@
+// now.baga — wall-clock UTC civil date via std/time (clock_gettime).
+
+import "types.baga"
+import "cal.baga"
+import "clock.baga"
+import "std/time/time.baga"
+
+fn dt_today() -> DtResult !Time {
+    let ms = time_now_ms()?
+    if ms < 0 {
+        return dt_err("clock_gettime failed")
+    }
+    return dt_from_unix_ms(ms)
+}
+
+fn ts_now() -> TsResult !Time {
+    let ms = time_now_ms()?
+    if ms < 0 {
+        return ts_err("clock_gettime failed")
+    }
+    return ts_from_unix(ms / 1000)
+}

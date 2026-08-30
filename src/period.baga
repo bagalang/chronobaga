@@ -1,0 +1,98 @@
+// period.baga — accounting / VAT year-month (bagabuch accounting_month, ППДДС).
+// Canonical string is ISO YYYY-MM. Financial compact is YYYYMM.
+
+import "types.baga"
+import "cal.baga"
+import "parse.baga"
+import "format.baga"
+import "ops.baga"
+import "std/str/str.baga"
+
+fn dt_period_of(d: Date) -> Period {
+    return Period { year: d.year, month: d.month }
+}
+
+fn dt_period_ymd(y: i64, m: i64) -> PerResult {
+    if y < 1 || y > 9999 {
+        return per_err("period year out of range 1..9999")
+    }
+    if m < 1 || m > 12 {
+        return per_err("period month out of range 1..12")
+    }
+    return per_ok(Period { year: y, month: m })
+}
+
+fn dt_period_parse(s: str) -> PerResult {
+    let t = str_trim(s)
+    if len(t) == 7 {
+        if char_at(t, 4) != 45 {
+            return per_err("period must be YYYY-MM or YYYYMM")
+        }
+        if dt_all_digits(t, 0, 4) == 0 || dt_all_digits(t, 5, 7) == 0 {
+            return per_err("period must be YYYY-MM or YYYYMM")
+        }
+        return dt_period_ymd(parse_int(substr(t, 0, 4)), parse_int(substr(t, 5, 7)))
+    }
+    if len(t) == 6 {
+        if dt_all_digits(t, 0, 6) == 0 {
+            return per_err("period must be YYYY-MM or YYYYMM")
+        }
+        return dt_period_ymd(parse_int(substr(t, 0, 4)), parse_int(substr(t, 4, 6)))
+    }
+    return per_err("period must be YYYY-MM or YYYYMM")
+}
+
+fn dt_period_to_iso(p: Period) -> str {
+    return concat(dt_pad4(p.year), concat("-", dt_pad2(p.month)))
+}
+
+fn dt_period_to_financial(p: Period) -> str {
+    return concat(dt_pad4(p.year), dt_pad2(p.month))
+}
+
+fn dt_period_to_bg(p: Period) -> str {
+    return concat(dt_pad2(p.month), concat(".", dt_pad4(p.year)))
+}
+
+fn dt_period_start(p: Period) -> DtResult {
+    return dt_ymd(p.year, p.month, 1)
+}
+
+fn dt_period_end(p: Period) -> DtResult {
+    return dt_ymd(p.year, p.month, dt_days_in_month(p.year, p.month))
+}
+
+fn dt_in_period(d: Date, p: Period) -> i64 {
+    if d.year == p.year && d.month == p.month {
+        return 1
+    }
+    return 0
+}
+
+fn dt_period_add(p: Period, n: i64) -> PerResult {
+    let d = dt_ymd(p.year, p.month, 1)
+    if d.ok == 0 {
+        return per_err(d.err)
+    }
+    let s = dt_add_months(d.value, n)
+    if s.ok == 0 {
+        return per_err(s.err)
+    }
+    return per_ok(dt_period_of(s.value))
+}
+
+fn dt_to_period(d: Date) -> str {
+    return dt_period_to_iso(dt_period_of(d))
+}
+
+fn dt_quarter_start(d: Date) -> Date {
+    let q = dt_quarter(d)
+    let m = (q - 1) * 3 + 1
+    return Date { year: d.year, month: m, day: 1 }
+}
+
+fn dt_quarter_end(d: Date) -> DtResult {
+    let q = dt_quarter(d)
+    let m = q * 3
+    return dt_ymd(d.year, m, dt_days_in_month(d.year, m))
+}

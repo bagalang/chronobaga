@@ -1,0 +1,34 @@
+// invoice_date.baga — bagabuch-shaped date path (chrono NaiveDate).
+//
+// issue 2026-08-30, due +14 days, VAT period, Bulgarian print.
+
+import "../src/chrono.baga"
+import "std/str/str.baga"
+
+fn main() {
+    let issue = dt_parse("2026-08-30")
+    if issue.ok == 0 {
+        eprintln(issue.err)
+        exit(1)
+    }
+    let fin = dt_parse("20260830")
+    if fin.ok == 0 || dt_eq(issue.value, fin.value) == 0 {
+        eprintln("ISO and financial must match")
+        exit(1)
+    }
+    let due = dt_add_days(issue.value, 14)
+    if due.ok == 0 {
+        eprintln(due.err)
+        exit(1)
+    }
+    let per = dt_period_of(issue.value)
+    let last = dt_period_end(per)
+    print(concat("iso=", dt_to_iso(issue.value)))
+    print(concat("financial=", dt_to_financial(issue.value)))
+    print(concat("invoice_bg=", dt_to_bg(issue.value)))
+    print(concat("invoice_long=", dt_to_bg_long(issue.value)))
+    print(concat("due=", dt_to_iso(due.value)))
+    print(concat("vat_period=", dt_period_to_iso(per)))
+    print(concat("period_end=", dt_to_iso(last.value)))
+    print(concat("weekday=", dt_bg_weekday_name(dt_weekday(issue.value))))
+}

@@ -1,0 +1,85 @@
+// parse.baga — ISO 8601 calendar date or financial YYYYMMDD only.
+// No slash dates, no 2-digit years, no DMY-with-dashes (ambiguous).
+// Bulgarian dd.mm.yyyy lives in bg.baga (invoice / VAT display & OCR).
+
+import "types.baga"
+import "cal.baga"
+import "std/str/str.baga"
+
+fn dt_is_digit(c: i64) -> i64 {
+    if c >= 48 && c <= 57 {
+        return 1
+    }
+    return 0
+}
+
+fn dt_all_digits(s: str, a: i64, b: i64) -> i64 {
+    if a < 0 || b > len(s) || b <= a {
+        return 0
+    }
+    let mut i = a
+    while i < b {
+        if dt_is_digit(char_at(s, i)) == 0 {
+            return 0
+        }
+        i = i + 1
+    }
+    return 1
+}
+
+fn dt_parse_iso(s: str) -> DtResult {
+    let t = str_trim(s)
+    if len(t) != 10 {
+        return dt_err("ISO date must be YYYY-MM-DD")
+    }
+    if char_at(t, 4) != 45 || char_at(t, 7) != 45 {
+        return dt_err("ISO date must be YYYY-MM-DD")
+    }
+    if dt_all_digits(t, 0, 4) == 0 {
+        return dt_err("ISO year is not digits")
+    }
+    if dt_all_digits(t, 5, 7) == 0 {
+        return dt_err("ISO month is not digits")
+    }
+    if dt_all_digits(t, 8, 10) == 0 {
+        return dt_err("ISO day is not digits")
+    }
+    let y = parse_int(substr(t, 0, 4))
+    let m = parse_int(substr(t, 5, 7))
+    let d = parse_int(substr(t, 8, 10))
+    return dt_ymd(y, m, d)
+}
+
+fn dt_parse_financial(s: str) -> DtResult {
+    let t = str_trim(s)
+    if len(t) != 8 {
+        return dt_err("financial date must be YYYYMMDD")
+    }
+    if dt_all_digits(t, 0, 8) == 0 {
+        return dt_err("financial date must be YYYYMMDD")
+    }
+    let y = parse_int(substr(t, 0, 4))
+    let m = parse_int(substr(t, 4, 6))
+    let d = parse_int(substr(t, 6, 8))
+    return dt_ymd(y, m, d)
+}
+
+// Canonical parse: ISO YYYY-MM-DD or financial YYYYMMDD. Nothing else.
+fn dt_parse(s: str) -> DtResult {
+    let t = str_trim(s)
+    if len(t) == 10 {
+        return dt_parse_iso(t)
+    }
+    if len(t) == 8 {
+        return dt_parse_financial(t)
+    }
+    return dt_err("date must be ISO YYYY-MM-DD or financial YYYYMMDD")
+}
+
+fn dt_canonical(s: str) -> DtResult {
+    let t = str_trim(s)
+    if t == "" {
+        return dt_err("empty date")
+    }
+    return dt_parse(t)
+}

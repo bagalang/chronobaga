@@ -1,0 +1,113 @@
+// clock.baga — naive time-of-day and UTC DateTime (chrono NaiveTime / NaiveDateTime).
+// No IANA zones in P0. Offset +03:00 / Europe/Sofia is a documented gap.
+
+import "types.baga"
+import "cal.baga"
+import "parse.baga"
+import "format.baga"
+import "std/str/str.baga"
+
+fn tm_hms(h: i64, m: i64, s: i64) -> TmResult {
+    if h < 0 || h > 23 {
+        return tm_err("hour out of range 0..23")
+    }
+    if m < 0 || m > 59 {
+        return tm_err("minute out of range 0..59")
+    }
+    if s < 0 || s > 59 {
+        return tm_err("second out of range 0..59")
+    }
+    return tm_ok(Time { hour: h, minute: m, second: s })
+}
+
+fn tm_to_iso(t: Time) -> str {
+    return concat(concat(dt_pad2(t.hour), ":"), concat(dt_pad2(t.minute), concat(":", dt_pad2(t.second))))
+}
+
+fn tm_parse(s: str) -> TmResult {
+    let t = str_trim(s)
+    if len(t) != 8 {
+        return tm_err("time must be HH:MM:SS")
+    }
+    if char_at(t, 2) != 58 || char_at(t, 5) != 58 {
+        return tm_err("time must be HH:MM:SS")
+    }
+    if dt_all_digits(t, 0, 2) == 0 || dt_all_digits(t, 3, 5) == 0 || dt_all_digits(t, 6, 8) == 0 {
+        return tm_err("time must be HH:MM:SS")
+    }
+    return tm_hms(parse_int(substr(t, 0, 2)), parse_int(substr(t, 3, 5)), parse_int(substr(t, 6, 8)))
+}
+
+fn ts_of(d: Date, t: Time) -> DateTime {
+    return DateTime {
+        year: d.year,
+        month: d.month,
+        day: d.day,
+        hour: t.hour,
+        minute: t.minute,
+        second: t.second
+    }
+}
+
+fn ts_date(ts: DateTime) -> Date {
+    return Date { year: ts.year, month: ts.month, day: ts.day }
+}
+
+fn ts_time(ts: DateTime) -> Time {
+    return Time { hour: ts.hour, minute: ts.minute, second: ts.second }
+}
+
+fn ts_to_iso(ts: DateTime) -> str {
+    return concat(dt_to_iso(ts_date(ts)), concat("T", tm_to_iso(ts_time(ts))))
+}
+
+fn ts_parse_iso(s: str) -> TsResult {
+    let t = str_trim(s)
+    let n = len(t)
+    if n < 19 {
+        return ts_err("datetime must be YYYY-MM-DDTHH:MM:SS")
+    }
+    let sep = char_at(t, 10)
+    if sep != 84 && sep != 32 {
+        return ts_err("datetime must be YYYY-MM-DDTHH:MM:SS")
+    }
+    let d = dt_parse_iso(substr(t, 0, 10))
+    if d.ok == 0 {
+        return ts_err(d.err)
+    }
+    let mut rest = substr(t, 11, n)
+    if str_ends_with(rest, "Z") {
+        rest = substr(rest, 0, len(rest) - 1)
+    }
+    let tm = tm_parse(rest)
+    if tm.ok == 0 {
+        return ts_err(tm.err)
+    }
+    return ts_ok(ts_of(d.value, tm.value))
+}
+
+fn ts_from_unix(sec: i64) -> TsResult {
+    let mut days = sec / 86400
+    let mut sod = sec % 86400
+    if sod < 0 {
+        days = days - 1
+        sod = sod + 86400
+    }
+    let d = dt_from_unix_days(days)
+    if d.ok == 0 {
+        return ts_err(d.err)
+    }
+    let h = sod / 3600
+    let m = (sod % 3600) / 60
+    let s = sod % 60
+    let tm = tm_hms(h, m, s)
+    if tm.ok == 0 {
+        return ts_err(tm.err)
+    }
+    return ts_ok(ts_of(d.value, tm.value))
+}
+
+fn ts_to_unix(ts: DateTime) -> i64 {
+    let days = dt_unix_days(ts_date(ts))
+    return days * 86400 + ts.hour * 3600 + ts.minute * 60 + ts.second
+}

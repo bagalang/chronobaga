@@ -1,0 +1,22 @@
+// json.baga — Date as a JSON string, always ISO YYYY-MM-DD (never a number).
+
+import "types.baga"
+import "parse.baga"
+import "format.baga"
+import "std/str/str.baga"
+
+fn dt_to_json(d: Date) -> str {
+    return concat("\"", concat(dt_to_iso(d), "\""))
+}
+
+fn dt_from_json(s: str) -> DtResult {
+    let t = str_trim(s)
+    let n = len(t)
+    if n < 2 {
+        return dt_err("json date must be a string")
+    }
+    if char_at(t, 0) != 34 || char_at(t, n - 1) != 34 {
+        return dt_err("json date must be a string")
+    }
+    return dt_parse(substr(t, 1, n - 1))
+}

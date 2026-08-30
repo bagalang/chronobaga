@@ -1,0 +1,25 @@
+// smoke.baga — package-local smoke.
+
+import "../src/chrono.baga"
+
+fn main() {
+    let a = dt_parse("2026-08-30")
+    let b = dt_parse("20260830")
+    if a.ok == 0 || b.ok == 0 {
+        eprintln("parse fail")
+        exit(1)
+    }
+    if dt_eq(a.value, b.value) == 0 {
+        eprintln("ISO/financial mismatch")
+        exit(1)
+    }
+    if dt_to_bg(a.value) != "30.08.2026" {
+        eprintln(concat("want 30.08.2026 got ", dt_to_bg(a.value)))
+        exit(1)
+    }
+    if dt_to_period(a.value) != "2026-08" {
+        eprintln(concat("want 2026-08 got ", dt_to_period(a.value)))
+        exit(1)
+    }
+    print("chronobaga smoke: ok")
+}

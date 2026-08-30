@@ -1,0 +1,108 @@
+// bg.baga — Bulgarian civil date for invoices and VAT registers (ЗДДС / НАП).
+// Display only. Storage and JSON stay ISO or financial (parse.baga).
+
+import "types.baga"
+import "cal.baga"
+import "parse.baga"
+import "format.baga"
+import "std/str/str.baga"
+
+fn dt_bg_month_name(m: i64) -> str {
+    if m == 1 { return "януари" }
+    if m == 2 { return "февруари" }
+    if m == 3 { return "март" }
+    if m == 4 { return "април" }
+    if m == 5 { return "май" }
+    if m == 6 { return "юни" }
+    if m == 7 { return "юли" }
+    if m == 8 { return "август" }
+    if m == 9 { return "септември" }
+    if m == 10 { return "октомври" }
+    if m == 11 { return "ноември" }
+    if m == 12 { return "декември" }
+    return ""
+}
+
+fn dt_bg_weekday_name(w: i64) -> str {
+    if w == 1 { return "понеделник" }
+    if w == 2 { return "вторник" }
+    if w == 3 { return "сряда" }
+    if w == 4 { return "четвъртък" }
+    if w == 5 { return "петък" }
+    if w == 6 { return "събота" }
+    if w == 7 { return "неделя" }
+    return ""
+}
+
+fn dt_to_bg(d: Date) -> str {
+    return concat(concat(dt_pad2(d.day), "."), concat(dt_pad2(d.month), concat(".", dt_pad4(d.year))))
+}
+
+fn dt_to_bg_long(d: Date) -> str {
+    return concat(concat(int_to_str(d.day), " "), concat(dt_bg_month_name(d.month), concat(" ", concat(int_to_str(d.year), " г."))))
+}
+
+fn dt_parse_bg_parts(t: str, d1: i64, d2: i64) -> DtResult {
+    if dt_all_digits(t, 0, d1) == 0 {
+        return dt_err("Bulgarian date day is not digits")
+    }
+    if dt_all_digits(t, d1 + 1, d2) == 0 {
+        return dt_err("Bulgarian date month is not digits")
+    }
+    if dt_all_digits(t, d2 + 1, len(t)) == 0 {
+        return dt_err("Bulgarian date year is not digits")
+    }
+    let day = parse_int(substr(t, 0, d1))
+    let month = parse_int(substr(t, d1 + 1, d2))
+    let year = parse_int(substr(t, d2 + 1, len(t)))
+    return dt_ymd(year, month, day)
+}
+
+// dd.mm.yyyy or d.m.yyyy — dots only, 4-digit year. Not for storage.
+fn dt_parse_bg(s: str) -> DtResult {
+    let t = str_trim(s)
+    let n = len(t)
+    if n < 8 || n > 10 {
+        return dt_err("Bulgarian date must be dd.mm.yyyy")
+    }
+    let d1 = str_find(t, ".")
+    if d1 <= 0 {
+        return dt_err("Bulgarian date must be dd.mm.yyyy")
+    }
+    let rest = substr(t, d1 + 1, n)
+    let d2rel = str_find(rest, ".")
+    if d2rel <= 0 {
+        return dt_err("Bulgarian date must be dd.mm.yyyy")
+    }
+    let d2 = d1 + 1 + d2rel
+    if str_find(substr(t, d2 + 1, n), ".") >= 0 {
+        return dt_err("Bulgarian date must be dd.mm.yyyy")
+    }
+    if n - d2 - 1 != 4 {
+        return dt_err("Bulgarian date year must be 4 digits")
+    }
+    return dt_parse_bg_parts(t, d1, d2)
+}
+
+// Incoming invoice / OCR: ISO, financial, or Bulgarian. Result is a Date
+// (format with dt_to_iso for storage).
+fn dt_parse_invoice(s: str) -> DtResult {
+    let r = dt_parse(s)
+    if r.ok == 1 {
+        return r
+    }
+    return dt_parse_bg(s)
+}
+
+// Display helper: known date → dd.mm.yyyy; unknown / empty → original.
+fn dt_to_bg_or(s: str) -> str {
+    let t = str_trim(s)
+    if t == "" {
+        return ""
+    }
+    let r = dt_parse_invoice(t)
+    if r.ok == 0 {
+        return t
+    }
+    return dt_to_bg(r.value)
+}

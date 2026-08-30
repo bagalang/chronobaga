@@ -1,0 +1,122 @@
+// types.baga — civil date / time / period (chrono NaiveDate family).
+//
+// Year range is ISO 1..9999. Invalid dates are never constructed: every
+// public constructor returns DtResult.
+
+struct Date {
+    year: i64,
+    month: i64,
+    day: i64
+}
+
+struct Time {
+    hour: i64,
+    minute: i64,
+    second: i64
+}
+
+struct DateTime {
+    year: i64,
+    month: i64,
+    day: i64,
+    hour: i64,
+    minute: i64,
+    second: i64
+}
+
+struct Period {
+    year: i64,
+    month: i64
+}
+
+struct DtResult {
+    ok: i64,
+    err: str,
+    value: Date
+}
+
+struct TmResult {
+    ok: i64,
+    err: str,
+    value: Time
+}
+
+struct TsResult {
+    ok: i64,
+    err: str,
+    value: DateTime
+}
+
+struct PerResult {
+    ok: i64,
+    err: str,
+    value: Period
+}
+
+fn dt_nil() -> Date {
+    return Date { year: 0, month: 0, day: 0 }
+}
+
+fn tm_nil() -> Time {
+    return Time { hour: 0, minute: 0, second: 0 }
+}
+
+fn ts_nil() -> DateTime {
+    return DateTime { year: 0, month: 0, day: 0, hour: 0, minute: 0, second: 0 }
+}
+
+fn per_nil() -> Period {
+    return Period { year: 0, month: 0 }
+}
+
+fn dt_ok(v: Date) -> DtResult {
+    return DtResult { ok: 1, err: "", value: v }
+}
+
+fn dt_err(msg: str) -> DtResult {
+    return DtResult { ok: 0, err: msg, value: dt_nil() }
+}
+
+fn tm_ok(v: Time) -> TmResult {
+    return TmResult { ok: 1, err: "", value: v }
+}
+
+fn tm_err(msg: str) -> TmResult {
+    return TmResult { ok: 0, err: msg, value: tm_nil() }
+}
+
+fn ts_ok(v: DateTime) -> TsResult {
+    return TsResult { ok: 1, err: "", value: v }
+}
+
+fn ts_err(msg: str) -> TsResult {
+    return TsResult { ok: 0, err: msg, value: ts_nil() }
+}
+
+fn per_ok(v: Period) -> PerResult {
+    return PerResult { ok: 1, err: "", value: v }
+}
+
+fn per_err(msg: str) -> PerResult {
+    return PerResult { ok: 0, err: msg, value: per_nil() }
+}
+
+fn dt_year(d: Date) -> i64 {
+    return d.year
+}
+
+fn dt_month(d: Date) -> i64 {
+    return d.month
+}
+
+fn dt_day(d: Date) -> i64 {
+    return d.day
+}
+
+fn dt_unix_epoch() -> Date {
+    return Date { year: 1970, month: 1, day: 1 }
+}
+
+fn chrono_version() -> str {
+    return "0.1.0"
+}
